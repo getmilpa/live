@@ -140,7 +140,7 @@ the seam both build on, not either surface itself.
 ## Requirements
 
 - PHP **≥ 8.3**
-- `milpa/core` **^0.5**
+- `milpa/core` **^0.6**
 - `psr/log` **^3**
 
 ## Documentation

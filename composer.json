@@ -3,6 +3,12 @@
   "description": "Render-target-agnostic live component primitives for the Milpa PHP framework: contracts, value objects, components, data sources, and the event-driven mount/handle/render lifecycle.",
   "type": "library",
   "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Rodrigo Vicente - TeamX Agency",
+      "homepage": "https://teamx.agency"
+    }
+  ],
   "require": {
     "php": ">=8.3",
     "milpa/core": "^0.6",

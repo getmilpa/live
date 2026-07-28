@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/getmilpa/live/compare/v0.1.1...v0.2.0) (2026-07-28)
+
+
+### Features
+
+* publicar Milpa\Live\Schema — de esquema JSON a formulario tipado ([ae400d3](https://github.com/getmilpa/live/commit/ae400d32cd479abcd7c031cb5c1db51a683129fc))
+
 ## [0.1.1](https://github.com/getmilpa/live/compare/v0.1.0...v0.1.1) (2026-07-12)
 
 

@@ -2,3 +2,12 @@ parameters:
     level: 6
     paths:
         - src
+
+    ignoreErrors:
+        # RendersTheSameComponent is a published extension point: milpa/live-web and milpa/live-tui
+        # each run it against their own renderer, which is the only way "one component, every
+        # surface" can be checked at all — the two surfaces do not depend on each other. Unused
+        # here is what a conformance kit looks like from inside the package that ships it.
+        -
+            identifier: trait.unused
+            path: src/Testing/RendersTheSameComponent.php

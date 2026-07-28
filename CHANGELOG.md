@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/getmilpa/live/compare/v0.2.0...v0.3.0) (2026-07-28)
+
+
+### Features
+
+* ship the conformance every surface renderer must answer ([d92b4b8](https://github.com/getmilpa/live/commit/d92b4b8707186dc91cde2130f9f374a93622d1c3))
+
 ## [0.2.0](https://github.com/getmilpa/live/compare/v0.1.1...v0.2.0) (2026-07-28)
 
 

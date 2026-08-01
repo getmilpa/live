@@ -1,6 +1,15 @@
 {
   "name": "milpa/live",
   "description": "Render-target-agnostic live component primitives for the Milpa PHP framework: contracts, value objects, components, data sources, and the event-driven mount/handle/render lifecycle.",
+  "keywords": [
+    "php",
+    "milpa",
+    "framework",
+    "live-components",
+    "reactive",
+    "render-agnostic",
+    "components"
+  ],
   "type": "library",
   "license": "Apache-2.0",
   "authors": [
@@ -11,7 +20,7 @@
   ],
   "require": {
     "php": ">=8.3",
-    "milpa/core": "^0.6",
+    "milpa/core": "^0.6.2 || ^0.7",
     "psr/log": "^3"
   },
   "require-dev": {

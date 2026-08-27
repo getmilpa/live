@@ -137,4 +137,47 @@ final class StateMachineComponentTest extends TestCase
         self::assertSame('a', $r->state->data['state'], 'an unknown guard op is refused, not silently passed');
         self::assertArrayHasKey('guard', $r->errors);
     }
+    public function testACompoundAllGuardNeedsEverySubconditionToHold(): void
+    {
+        $m = ['initial' => 'draft', 'transitions' => [
+            'draft' => [
+                'setok' => ['to' => 'draft', 'effects' => [['type' => 'set-variable', 'key' => 'ok', 'value' => true]]],
+                'bump' => ['to' => 'draft', 'effects' => [['type' => 'set-variable', 'key' => 'count', 'value' => 2]]],
+                'submit' => ['to' => 'sent', 'when' => ['all' => [
+                    ['var' => 'ok', 'op' => 'truthy'],
+                    ['var' => 'count', 'op' => 'gte', 'value' => 2],
+                ]]],
+            ],
+            'sent' => [],
+        ]];
+        $s = $this->mount(['machine' => $m]);
+        self::assertSame('draft', $this->handle($s, 'submit')->state->data['state'], 'neither sub holds → refused');
+
+        $okOnly = $this->handle($s, 'setok')->state; // ok=true, count unset
+        self::assertSame('draft', $this->handle($okOnly, 'submit')->state->data['state'], 'only one sub holds → refused');
+
+        $both = $this->handle($this->handle($okOnly, 'bump')->state, 'submit');
+        self::assertSame('sent', $both->state->data['state'], 'all subs hold → fires');
+    }
+
+    public function testCompoundAnyAndNotGuards(): void
+    {
+        $any = ['any' => [['var' => 'a', 'op' => 'truthy'], ['var' => 'b', 'op' => 'truthy']]];
+        $m = ['initial' => 's', 'transitions' => [
+            's' => [
+                'seta' => ['to' => 's', 'effects' => [['type' => 'set-variable', 'key' => 'a', 'value' => true]]],
+                'goany' => ['to' => 'done', 'when' => $any],
+                'gonot' => ['to' => 'done', 'when' => ['not' => ['var' => 'a', 'op' => 'truthy']]],
+            ],
+            'done' => [],
+        ]];
+        // any: neither a nor b → refused; then a set → fires
+        $s = $this->mount(['machine' => $m]);
+        self::assertSame('s', $this->handle($s, 'goany')->state->data['state']);
+        $withA = $this->handle($s, 'seta')->state;
+        self::assertSame('done', $this->handle($withA, 'goany')->state->data['state'], 'any holds once a is set');
+        // not: gonot fires while a is falsy, refused once a is set
+        self::assertSame('done', $this->handle($s, 'gonot')->state->data['state'], 'not(a) holds while a is falsy');
+        self::assertSame('s', $this->handle($withA, 'gonot')->state->data['state'], 'not(a) fails once a is truthy');
+    }
 }

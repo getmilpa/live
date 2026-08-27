@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.4.0';
+    private const VERSION = '0.5.0';
 
     private const INITIAL = 'queued';
 
@@ -170,6 +170,15 @@ final class StateMachineComponent extends AbstractDashboardComponent
                     );
                 }
 
+                if (isset($transition['when']) && ! $this->guardSatisfied($transition['when'], $request->state->data)) {
+                    // A declared guard (portable-interaction/v1 Condition) that does not hold refuses the
+                    // transition — a predicate over the state, evaluated as data, never code.
+                    return new InteractionResult(
+                        state: $request->state,
+                        errors: ['guard' => "The guard on '{$event}' from '{$current}' is not satisfied."],
+                    );
+                }
+
                 $data = $request->state->data;
                 $data['state'] = $transition['to'];
                 $emitted = [];
@@ -202,6 +211,37 @@ final class StateMachineComponent extends AbstractDashboardComponent
                 );
             },
         );
+    }
+
+    /**
+     * Evaluate a declared guard (portable-interaction/v1 Condition) against the state: `{var, op, value}` over
+     * a state-data field, with a CLOSED op set. An unknown op fails closed (the transition is refused). No code.
+     *
+     * @param mixed                $when
+     * @param array<string, mixed> $data
+     */
+    private function guardSatisfied($when, array $data): bool
+    {
+        if (! \is_array($when)) {
+            return false;
+        }
+        $var = \is_string($when['var'] ?? null) ? $when['var'] : '';
+        $op = \is_string($when['op'] ?? null) ? $when['op'] : 'truthy';
+        $actual = $data[$var] ?? null;
+        $value = $when['value'] ?? null;
+        $numeric = \is_numeric($actual) && \is_numeric($value);
+
+        return match ($op) {
+            'eq' => $actual == $value,
+            'neq' => $actual != $value,
+            'truthy' => (bool) $actual,
+            'falsy' => ! $actual,
+            'gt' => $numeric && $actual > $value,
+            'gte' => $numeric && $actual >= $value,
+            'lt' => $numeric && $actual < $value,
+            'lte' => $numeric && $actual <= $value,
+            default => false, // closed set: an unknown op is refused
+        };
     }
 
     /**

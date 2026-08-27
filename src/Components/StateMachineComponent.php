@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.5.0';
+    private const VERSION = '0.6.0';
 
     private const INITIAL = 'queued';
 
@@ -214,8 +214,9 @@ final class StateMachineComponent extends AbstractDashboardComponent
     }
 
     /**
-     * Evaluate a declared guard (portable-interaction/v1 Condition) against the state: `{var, op, value}` over
-     * a state-data field, with a CLOSED op set. An unknown op fails closed (the transition is refused). No code.
+     * Evaluate a declared guard (portable-interaction/v1 Condition) against the state. A leaf is `{var, op,
+     * value}` over a state-data field with a CLOSED op set; a compound guard is `{all|any: [sub...]}` or
+     * `{not: sub}` — a closed declarative tree. An unknown op fails closed (the transition is refused). No code.
      *
      * @param mixed                $when
      * @param array<string, mixed> $data
@@ -225,6 +226,31 @@ final class StateMachineComponent extends AbstractDashboardComponent
         if (! \is_array($when)) {
             return false;
         }
+
+        // Compound guards are a CLOSED declarative tree: all/any/not over sub-conditions, leaves are
+        // {var, op, value}. The recursion is bounded data, never code.
+        if (\is_array($when['all'] ?? null)) {
+            foreach ($when['all'] as $sub) {
+                if (! $this->guardSatisfied($sub, $data)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        if (\is_array($when['any'] ?? null)) {
+            foreach ($when['any'] as $sub) {
+                if ($this->guardSatisfied($sub, $data)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        if (\array_key_exists('not', $when)) {
+            return ! $this->guardSatisfied($when['not'], $data);
+        }
+
         $var = \is_string($when['var'] ?? null) ? $when['var'] : '';
         $op = \is_string($when['op'] ?? null) ? $when['op'] : 'truthy';
         $actual = $data[$var] ?? null;

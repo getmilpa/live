@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/getmilpa/live/compare/v0.14.0...v0.15.0) (2026-08-27)
+
+
+### Features
+
+* **support:** a Clock primitive (SystemClock/FixedClock) and a deterministic `stamp` effect ([#30](https://github.com/getmilpa/live/issues/30)) ([6ccc138](https://github.com/getmilpa/live/commit/6ccc138e904532c7d0c682c2985042b67d3cfb0a))
+
 ## [0.14.0](https://github.com/getmilpa/live/compare/v0.13.0...v0.14.0) (2026-08-27)
 
 

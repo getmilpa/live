@@ -105,4 +105,36 @@ final class StateMachineComponentTest extends TestCase
         self::assertArrayHasKey('fire', StateMachineComponent::contract()->actions, 'fire is a declared action the authorizer allows');
         self::assertSame('event', StateMachineComponent::contract()->actions['fire']['scopeBy'], 'fire is scoped per-event by the authorizer (decisions/0096)');
     }
+    public function testAGuardedTransitionFiresOnlyWhenItsDeclaredConditionHolds(): void
+    {
+        $gated = ['initial' => 'pending', 'transitions' => [
+            'pending' => [
+                'approve' => ['to' => 'pending', 'effects' => [['type' => 'set-variable', 'key' => 'ok', 'value' => true]]],
+                'submit' => ['to' => 'sent', 'when' => ['var' => 'ok', 'op' => 'truthy']],
+            ],
+            'sent' => [],
+        ]];
+        $s = $this->mount(['machine' => $gated]);
+
+        // submit before the guard holds → refused, no advance
+        $blocked = $this->handle($s, 'submit');
+        self::assertSame('pending', $blocked->state->data['state']);
+        self::assertArrayHasKey('guard', $blocked->errors);
+
+        // approve sets ok=true, then submit passes the guard
+        $approved = $this->handle($s, 'approve')->state;
+        self::assertTrue($approved->data['ok']);
+        $sent = $this->handle($approved, 'submit');
+        self::assertSame('sent', $sent->state->data['state'], 'the guard held → the transition fired');
+    }
+
+    public function testAnUnknownGuardOpFailsClosed(): void
+    {
+        $bad = ['initial' => 'a', 'transitions' => [
+            'a' => ['go' => ['to' => 'b', 'when' => ['var' => 'x', 'op' => 'exec-shell', 'value' => 1]]],
+        ]];
+        $r = $this->handle($this->mount(['machine' => $bad]), 'go');
+        self::assertSame('a', $r->state->data['state'], 'an unknown guard op is refused, not silently passed');
+        self::assertArrayHasKey('guard', $r->errors);
+    }
 }

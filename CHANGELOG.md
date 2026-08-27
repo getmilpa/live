@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/getmilpa/live/compare/v0.7.0...v0.8.0) (2026-08-27)
+
+
+### Features
+
+* **components:** a StateMachine can be defined by props, not just baked into the class ([#16](https://github.com/getmilpa/live/issues/16)) ([ee8eee5](https://github.com/getmilpa/live/commit/ee8eee5001f366a813ebbd89533b9d6fbe11a85d))
+
 ## [0.7.0](https://github.com/getmilpa/live/compare/v0.6.0...v0.7.0) (2026-08-27)
 
 

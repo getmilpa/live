@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/getmilpa/live/compare/v0.8.0...v0.9.0) (2026-08-27)
+
+
+### Features
+
+* **components:** StateMachine's `fire` action is scoped per-event (scopeBy: event) ([#18](https://github.com/getmilpa/live/issues/18)) ([c534573](https://github.com/getmilpa/live/commit/c534573b1d60b1b3981fb1eb1b02f4938c709053))
+
 ## [0.8.0](https://github.com/getmilpa/live/compare/v0.7.0...v0.8.0) (2026-08-27)
 
 

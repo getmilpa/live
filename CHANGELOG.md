@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/getmilpa/live/compare/v0.5.1...v0.6.0) (2026-08-27)
+
+
+### Features
+
+* **components:** a closed declarative StateMachine component over the live wire ([#12](https://github.com/getmilpa/live/issues/12)) ([50b79db](https://github.com/getmilpa/live/commit/50b79db522931232bddbac5d29a7c65beacc775d))
+
 ## [0.4.1](https://github.com/getmilpa/live/compare/v0.4.0...v0.4.1) (2026-08-01)
 
 

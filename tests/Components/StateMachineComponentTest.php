@@ -219,4 +219,29 @@ final class StateMachineComponentTest extends TestCase
         self::assertSame('p', $this->handle($s, 'go')->state->data['state'], 'flat var back-compat: refused while unset');
         self::assertSame('q', $this->handle($this->handle($s, 'ok')->state, 'go')->state->data['state']);
     }
+    public function testEnteringAStateFiresItsOnEnterEffects(): void
+    {
+        $m = ['initial' => 'idle', 'transitions' => [
+            'idle' => ['start' => ['to' => 'running', 'effects' => [['type' => 'emit', 'event' => 'started']]]],
+            'running' => [],
+        ], 'states' => [
+            'running' => ['onEnter' => [['type' => 'set-variable', 'key' => 'entered', 'value' => true], ['type' => 'emit', 'event' => 'running.entered']]],
+        ]];
+        $r = $this->handle($this->mount(['machine' => $m]), 'start');
+        self::assertSame('running', $r->state->data['state']);
+        self::assertTrue($r->state->data['entered'], 'the destination state\'s onEnter set-variable fired');
+        // both the transition emit and the onEnter emit are present
+        self::assertContains(['type' => 'emit', 'event' => 'started'], $r->effects);
+        self::assertContains(['type' => 'emit', 'event' => 'running.entered'], $r->effects, 'the onEnter emit fired on entry');
+    }
+
+    public function testAnOnEnterEffectOutsideTheAllowListIsRefused(): void
+    {
+        $m = ['initial' => 'a', 'transitions' => ['a' => ['go' => ['to' => 'b']]], 'states' => [
+            'b' => ['onEnter' => [['type' => 'run-shell', 'cmd' => 'x']]],
+        ]];
+        $r = $this->handle($this->mount(['machine' => $m]), 'go');
+        self::assertSame('a', $r->state->data['state'], 'a non-allow-listed onEnter effect refuses the transition');
+        self::assertArrayHasKey('effect', $r->errors);
+    }
 }

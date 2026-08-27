@@ -38,7 +38,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.11.0';
+    private const VERSION = '0.12.0';
 
     private const INITIAL = 'queued';
 
@@ -140,10 +140,28 @@ final class StateMachineComponent extends AbstractDashboardComponent
      * transition) and every transition names a string target. It says nothing about effect TYPES — those are
      * the component's closed allow-list, checked when a transition fires.
      *
-     * @param array<string, mixed> $transitions
+     * @param array<array-key, mixed> $transitions the array (list) form or the nested-map form
      */
     private function wellFormed(array $transitions, string $initial): bool
     {
+        $states = [];
+        if (array_is_list($transitions)) {
+            // canonical ARRAY form [{from, on, to, when?, effects?}]
+            foreach ($transitions as $t) {
+                $from = \is_array($t) ? ($t['from'] ?? null) : null;
+                $on = \is_array($t) ? ($t['on'] ?? null) : null;
+                $to = \is_array($t) ? ($t['to'] ?? null) : null;
+                if (! \is_string($from) || ! \is_string($on) || ! \is_string($to) || $to === '') {
+                    return false;
+                }
+                $states[] = $from;
+                $states[] = $to;
+            }
+
+            return \in_array($initial, $states, true);
+        }
+
+        // nested-MAP form {from: {event: {to, ...}}}
         $states = array_keys($transitions);
         foreach ($transitions as $events) {
             if (! \is_array($events)) {
@@ -177,23 +195,9 @@ final class StateMachineComponent extends AbstractDashboardComponent
                     ? (\is_string($request->payload['event'] ?? null) ? $request->payload['event'] : '')
                     : $request->action;
                 $current = \is_string($request->state->data['state'] ?? null) ? $request->state->data['state'] : self::INITIAL;
-                $transition = $transitions[$current][$event] ?? null;
-
+                [$transition, $error] = $this->selectTransition($transitions, $current, $event, $request->state->data);
                 if ($transition === null) {
-                    // Closed machine: an event no transition declares does not move the state.
-                    return new InteractionResult(
-                        state: $request->state,
-                        errors: ['transition' => "No '{$event}' transition from '{$current}'."],
-                    );
-                }
-
-                if (isset($transition['when']) && ! $this->guardSatisfied($transition['when'], $request->state->data)) {
-                    // A declared guard (portable-interaction/v1 Condition) that does not hold refuses the
-                    // transition — a predicate over the state, evaluated as data, never code.
-                    return new InteractionResult(
-                        state: $request->state,
-                        errors: ['guard' => "The guard on '{$event}' from '{$current}' is not satisfied."],
-                    );
+                    return new InteractionResult(state: $request->state, errors: $error);
                 }
 
                 $data = $request->state->data;
@@ -203,8 +207,9 @@ final class StateMachineComponent extends AbstractDashboardComponent
                 // The state lifecycle, in order: the SOURCE state's exit effects (`onExit`), then the
                 // transition's own effects, then the DESTINATION state's entry effects (`onEnter`) —
                 // portable-interaction/v1 state-exit/state-enter. Each is data, allow-listed, no code.
-                $onExit = $machine['states'][$current]['onExit'] ?? [];
-                $onEnter = $machine['states'][$transition['to']]['onEnter'] ?? [];
+                $states = \is_array($machine['states'] ?? null) ? $machine['states'] : [];
+                $onExit = \is_array($states[$current] ?? null) ? ($states[$current]['onExit'] ?? []) : [];
+                $onEnter = \is_array($states[$transition['to']] ?? null) ? ($states[$transition['to']]['onEnter'] ?? []) : [];
                 foreach ([$onExit, $transition['effects'] ?? [], $onEnter] as $effects) {
                     $bad = $this->applyEffects(\is_array($effects) ? $effects : [], $data, $emitted);
                     if ($bad !== null) {
@@ -245,12 +250,17 @@ final class StateMachineComponent extends AbstractDashboardComponent
             if (! \in_array($type, $this->allowedEffectTypes(), true)) {
                 return $type;
             }
+            // Read either the runtime's inline shape ({key,value,event}) or the canonical Action shape
+            // ({target:{path}, params:{value|event}}) — the reconciliation to array+Action (greenhouse 0106).
+            $key = \is_string($effect['key'] ?? null) ? $effect['key'] : (string) ($effect['target']['path'] ?? '');
+            $value = \array_key_exists('value', $effect) ? $effect['value'] : ($effect['params']['value'] ?? null);
+            $event = \is_string($effect['event'] ?? null) ? $effect['event'] : (string) ($effect['params']['event'] ?? '');
             if ($type === 'set-variable') {
-                $data[(string) ($effect['key'] ?? '')] = $effect['value'] ?? null;
+                $data[$key] = $value;
             } elseif ($type === 'stamp') { // time as an input: read from the injected Clock, never date()
-                $data[(string) ($effect['key'] ?? '')] = $this->clock->now();
+                $data[$key] = $this->clock->now();
             } else { // 'emit' — a named event the host may observe, echoed to the client, never code
-                $emitted[] = ['type' => 'emit', 'event' => (string) ($effect['event'] ?? '')];
+                $emitted[] = ['type' => 'emit', 'event' => $event];
             }
         }
 
@@ -280,6 +290,47 @@ final class StateMachineComponent extends AbstractDashboardComponent
         }
 
         return $cursor;
+    }
+
+    /**
+     * Select the transition for (state, event) from either the canonical ARRAY form [{from,on,to,when?,effects?}]
+     * — which supports GUARD-FORKS (several transitions for the same state+event, the first whose guard holds
+     * wins, greenhouse decisions/0106/evidence/0347) — or the runtime's nested-MAP form. Returns [transition, null]
+     * or [null, errors].
+     *
+     * @param array<array-key, mixed> $transitions the array (list) or nested-map form
+     * @param array<string, mixed>    $data
+     *
+     * @return array{0: array<string, mixed>|null, 1: array<string, string>|null}
+     */
+    private function selectTransition(array $transitions, string $current, string $event, array $data): array
+    {
+        if (array_is_list($transitions)) {
+            $matched = false;
+            foreach ($transitions as $t) {
+                if (! \is_array($t) || ($t['from'] ?? null) !== $current || ($t['on'] ?? null) !== $event) {
+                    continue;
+                }
+                $matched = true;
+                if (! isset($t['when']) || $this->guardSatisfied($t['when'], $data)) {
+                    return [$t, null];
+                }
+            }
+
+            return $matched
+                ? [null, ['guard' => "No '{$event}' transition from '{$current}' has a satisfied guard."]]
+                : [null, ['transition' => "No '{$event}' transition from '{$current}'."]];
+        }
+
+        $t = $transitions[$current][$event] ?? null;
+        if ($t === null) {
+            return [null, ['transition' => "No '{$event}' transition from '{$current}'."]];
+        }
+        if (isset($t['when']) && ! $this->guardSatisfied($t['when'], $data)) {
+            return [null, ['guard' => "The guard on '{$event}' from '{$current}' is not satisfied."]];
+        }
+
+        return [$t, null];
     }
 
     /**

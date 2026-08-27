@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/getmilpa/live/compare/v0.10.0...v0.11.0) (2026-08-27)
+
+
+### Features
+
+* **components:** compound transition guards (all/any/not), still data not code ([#22](https://github.com/getmilpa/live/issues/22)) ([c658da3](https://github.com/getmilpa/live/commit/c658da327436084f5ad1ca2cafa72c8726f656e0))
+
 ## [0.10.0](https://github.com/getmilpa/live/compare/v0.9.0...v0.10.0) (2026-08-27)
 
 

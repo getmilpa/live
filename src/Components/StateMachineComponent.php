@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.7.0';
+    private const VERSION = '0.8.0';
 
     private const INITIAL = 'queued';
 
@@ -115,7 +115,12 @@ final class StateMachineComponent extends AbstractDashboardComponent
             return ['initial' => self::INITIAL, 'transitions' => self::TRANSITIONS];
         }
 
-        return ['initial' => $initial, 'transitions' => $transitions];
+        $machine = ['initial' => $initial, 'transitions' => $transitions];
+        if (\is_array($spec['states'] ?? null)) {
+            $machine['states'] = $spec['states']; // per-state onEnter/onExit, rides the signed state
+        }
+
+        return $machine;
     }
 
     /**
@@ -183,19 +188,18 @@ final class StateMachineComponent extends AbstractDashboardComponent
                 $data['state'] = $transition['to'];
                 $emitted = [];
 
-                foreach ($transition['effects'] ?? [] as $effect) {
-                    $type = \is_string($effect['type'] ?? null) ? $effect['type'] : '';
-                    if (! \in_array($type, $this->allowedEffectTypes(), true)) {
+                // The transition's own effects, then the entry (`onEnter`) effects the DESTINATION state declares
+                // (portable-interaction/v1 state-enter): a state can fire declared effects the moment it is
+                // entered — data, allow-listed, no code.
+                $onEnter = $machine['states'][$transition['to']]['onEnter'] ?? [];
+                foreach ([$transition['effects'] ?? [], $onEnter] as $effects) {
+                    $bad = $this->applyEffects(\is_array($effects) ? $effects : [], $data, $emitted);
+                    if ($bad !== null) {
                         // Closed allow-list: an effect no allow-list declares is refused, and the state does NOT move.
                         return new InteractionResult(
                             state: $request->state,
-                            errors: ['effect' => "Effect type '{$type}' is not allow-listed."],
+                            errors: ['effect' => "Effect type '{$bad}' is not allow-listed."],
                         );
-                    }
-                    if ($type === 'set-variable') {
-                        $data[(string) ($effect['key'] ?? '')] = $effect['value'] ?? null;
-                    } else { // 'emit' — a named event the host may observe, echoed to the client, never code
-                        $emitted[] = ['type' => 'emit', 'event' => (string) ($effect['event'] ?? '')];
                     }
                 }
 
@@ -211,6 +215,31 @@ final class StateMachineComponent extends AbstractDashboardComponent
                 );
             },
         );
+    }
+
+    /**
+     * Apply a list of allow-listed effects to `$data`/`$emitted` in place. Returns the offending type when an
+     * effect is outside the allow-list (the caller refuses without advancing), or null when all applied.
+     *
+     * @param list<array<string, mixed>> $effects
+     * @param array<string, mixed>       $data
+     * @param list<array<string, mixed>> $emitted
+     */
+    private function applyEffects(array $effects, array &$data, array &$emitted): ?string
+    {
+        foreach ($effects as $effect) {
+            $type = \is_string($effect['type'] ?? null) ? $effect['type'] : '';
+            if (! \in_array($type, $this->allowedEffectTypes(), true)) {
+                return $type;
+            }
+            if ($type === 'set-variable') {
+                $data[(string) ($effect['key'] ?? '')] = $effect['value'] ?? null;
+            } else { // 'emit' — a named event the host may observe, echoed to the client, never code
+                $emitted[] = ['type' => 'emit', 'event' => (string) ($effect['event'] ?? '')];
+            }
+        }
+
+        return null;
     }
 
     /**

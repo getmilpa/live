@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Milpa\Live\Tests\Components;
 
 use Milpa\Live\Components\StateMachineComponent;
+use Milpa\Live\Support\Clock;
+use Milpa\Live\Support\FixedClock;
 use Milpa\Live\ValueObjects\ComponentContext;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
@@ -267,5 +269,41 @@ final class StateMachineComponentTest extends TestCase
         $r = $this->handle($this->mount(['machine' => $m]), 'go');
         self::assertSame('a', $r->state->data['state'], 'a non-allow-listed onExit refuses the transition');
         self::assertArrayHasKey('effect', $r->errors);
+    }
+    public function testAStampEffectWithAFixedClockIsDeterministic(): void
+    {
+        $m = ['initial' => 'a', 'transitions' => ['a' => ['go' => ['to' => 'b', 'effects' => [['type' => 'stamp', 'key' => 'at']]]]]];
+        $component = new StateMachineComponent(null, new FixedClock('2026-08-27T00:00:00+00:00'));
+        $mount = $component->mount(['machine' => $m], new ComponentContext('sm-1', principal: 'actor:rod'));
+
+        $run = static fn (): array => $component->handle(new InteractionRequest(
+            componentId: 'sm-1',
+            componentName: 'state-machine',
+            action: 'go',
+            state: $mount,
+        ))->state->data;
+
+        $first = $run();
+        $second = $run();
+        self::assertSame('2026-08-27T00:00:00+00:00', $first['at'], 'the stamp read the injected clock, not date()');
+        self::assertSame($first, $second, 'same inputs + same clock → identical state (deterministic replay)');
+    }
+
+    public function testTheStampGenuinelyReadsTheClockNotAConstant(): void
+    {
+        // a counting clock proves the stamp reflects the clock: two runs differ
+        $counting = new class () implements Clock {
+            private int $n = 0;
+            public function now(): string
+            {
+                return 't' . (++$this->n);
+            }
+        };
+        $m = ['initial' => 'a', 'transitions' => ['a' => ['go' => ['to' => 'b', 'effects' => [['type' => 'stamp', 'key' => 'at']]]]]];
+        $component = new StateMachineComponent(null, $counting);
+        $mount = $component->mount(['machine' => $m], new ComponentContext('sm-1'));
+        $one = $component->handle(new InteractionRequest(componentId: 'sm-1', componentName: 'state-machine', action: 'go', state: $mount))->state->data['at'];
+        $two = $component->handle(new InteractionRequest(componentId: 'sm-1', componentName: 'state-machine', action: 'go', state: $mount))->state->data['at'];
+        self::assertNotSame($one, $two, 'the stamp reflects the clock (t1 then t2), so it is not a constant');
     }
 }

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.16.0](https://github.com/getmilpa/live/compare/v0.15.0...v0.16.0) (2026-08-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **support:** use the Clock primitive from milpa/core, drop the local copy ([#32](https://github.com/getmilpa/live/issues/32))
+
+### Code Refactoring
+
+* **support:** use the Clock primitive from milpa/core, drop the local copy ([#32](https://github.com/getmilpa/live/issues/32)) ([a125b36](https://github.com/getmilpa/live/commit/a125b368256faa3b5ca326e1ec31e39bd2d9b3e3))
+
 ## [0.15.0](https://github.com/getmilpa/live/compare/v0.14.0...v0.15.0) (2026-08-27)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/getmilpa/live/compare/v0.13.0...v0.14.0) (2026-08-27)
+
+
+### Features
+
+* **components:** a state can declare onExit effects — the full lifecycle in order ([#28](https://github.com/getmilpa/live/issues/28)) ([79243fc](https://github.com/getmilpa/live/commit/79243fcf388f5832b590907dc8a10678663e137a))
+
 ## [0.13.0](https://github.com/getmilpa/live/compare/v0.12.0...v0.13.0) (2026-08-27)
 
 

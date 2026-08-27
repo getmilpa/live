@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/getmilpa/live/compare/v0.9.0...v0.10.0) (2026-08-27)
+
+
+### Features
+
+* **components:** a StateMachine transition can carry a declared guard (v1 Condition) ([#20](https://github.com/getmilpa/live/issues/20)) ([68c3133](https://github.com/getmilpa/live/commit/68c3133902114954e09dc386cc70973d9832151b))
+
 ## [0.9.0](https://github.com/getmilpa/live/compare/v0.8.0...v0.9.0) (2026-08-27)
 
 

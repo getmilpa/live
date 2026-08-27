@@ -31,11 +31,11 @@ use Milpa\Live\ValueObjects\StateSnapshot;
  * never applied. The owner rides every transition: `meta.principal` is preserved across each advance, so a
  * machine advances only for the actor it was mounted for (greenhouse decisions/0093, effects: decisions/0094).
  */
-class StateMachineComponent extends AbstractDashboardComponent
+final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.2.0';
+    private const VERSION = '0.3.0';
 
     private const INITIAL = 'queued';
 
@@ -67,7 +67,7 @@ class StateMachineComponent extends AbstractDashboardComponent
             contractVersion: self::VERSION,
             summary: 'A closed declarative state machine: states, transitions and effects are data; the reducer is the table.',
             stateSchema: ['state' => ['type' => 'string']],
-            actions: ['start' => [], 'finish' => [], 'fail' => []],
+            actions: ['start' => [], 'finish' => [], 'fail' => [], 'fire' => ['payload' => ['event' => 'string']]],
         );
     }
 
@@ -78,9 +78,70 @@ class StateMachineComponent extends AbstractDashboardComponent
      */
     protected function initialData(array $props): array
     {
-        $initial = \is_string($props['initial'] ?? null) && $props['initial'] !== '' ? $props['initial'] : self::INITIAL;
+        $machine = $this->machineFrom($props);
 
-        return ['state' => \array_key_exists($initial, $this->transitions()) ? $initial : self::INITIAL];
+        return ['state' => $machine['initial']];
+    }
+
+    /**
+     * The machine as meta so it rides the SIGNED state (tamper-proof) and {@see handle()} reads it back — this
+     * is what lets an app DECLARE its own machine via props without any code (greenhouse decisions/0095).
+     *
+     * @param array<string, mixed> $props
+     *
+     * @return array<string, mixed>
+     */
+    protected function meta(array $props): array
+    {
+        return ['machine' => $this->machineFrom($props)];
+    }
+
+    /**
+     * Resolve the machine from `props['machine']` when it is a well-formed spec, else the baked default. The
+     * transition table's shape is validated here; the closed effect-type allow-list is enforced at transition
+     * time in {@see handle()}, so an app-declared effect of a type outside the allow-list is still refused.
+     *
+     * @param array<string, mixed> $props
+     *
+     * @return array{initial: string, transitions: array<string, array<string, array{to: string, effects?: list<array<string, mixed>>}>>}
+     */
+    private function machineFrom(array $props): array
+    {
+        $spec = $props['machine'] ?? null;
+        $transitions = \is_array($spec['transitions'] ?? null) ? $spec['transitions'] : null;
+        $initial = \is_string($spec['initial'] ?? null) ? $spec['initial'] : null;
+
+        if ($transitions === null || $initial === null || ! $this->wellFormed($transitions, $initial)) {
+            return ['initial' => self::INITIAL, 'transitions' => self::TRANSITIONS];
+        }
+
+        return ['initial' => $initial, 'transitions' => $transitions];
+    }
+
+    /**
+     * A machine spec is well-formed when the initial state exists (as a from-state or the target of some
+     * transition) and every transition names a string target. It says nothing about effect TYPES — those are
+     * the component's closed allow-list, checked when a transition fires.
+     *
+     * @param array<string, mixed> $transitions
+     */
+    private function wellFormed(array $transitions, string $initial): bool
+    {
+        $states = array_keys($transitions);
+        foreach ($transitions as $events) {
+            if (! \is_array($events)) {
+                return false;
+            }
+            foreach ($events as $t) {
+                $to = \is_array($t) ? ($t['to'] ?? null) : null;
+                if (! \is_string($to) || $to === '') {
+                    return false;
+                }
+                $states[] = $to;
+            }
+        }
+
+        return \in_array($initial, $states, true);
     }
 
     /**
@@ -93,14 +154,19 @@ class StateMachineComponent extends AbstractDashboardComponent
             $this->dispatcher,
             $request,
             function () use ($request): InteractionResult {
+                $machine = \is_array($request->state->meta['machine'] ?? null) ? $request->state->meta['machine'] : ['transitions' => self::TRANSITIONS];
+                $transitions = \is_array($machine['transitions'] ?? null) ? $machine['transitions'] : self::TRANSITIONS;
+                $event = $request->action === 'fire'
+                    ? (\is_string($request->payload['event'] ?? null) ? $request->payload['event'] : '')
+                    : $request->action;
                 $current = \is_string($request->state->data['state'] ?? null) ? $request->state->data['state'] : self::INITIAL;
-                $transition = $this->transitions()[$current][$request->action] ?? null;
+                $transition = $transitions[$current][$event] ?? null;
 
                 if ($transition === null) {
                     // Closed machine: an event no transition declares does not move the state.
                     return new InteractionResult(
                         state: $request->state,
-                        errors: ['transition' => "No '{$request->action}' transition from '{$current}'."],
+                        errors: ['transition' => "No '{$event}' transition from '{$current}'."],
                     );
                 }
 
@@ -136,16 +202,6 @@ class StateMachineComponent extends AbstractDashboardComponent
                 );
             },
         );
-    }
-
-    /**
-     * The transition table (overridable so a test can exercise the allow-list with a crafted transition).
-     *
-     * @return array<string, array<string, array{to: string, effects?: list<array<string, mixed>>}>>
-     */
-    protected function transitions(): array
-    {
-        return self::TRANSITIONS;
     }
 
     /**

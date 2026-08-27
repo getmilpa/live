@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/getmilpa/live/compare/v0.6.0...v0.7.0) (2026-08-27)
+
+
+### Features
+
+* **components:** StateMachine transitions fire allow-listed effects (data, not code) ([#14](https://github.com/getmilpa/live/issues/14)) ([abf3640](https://github.com/getmilpa/live/commit/abf36403111285a4eec0f204ac128f4bbd686860))
+
 ## [0.6.0](https://github.com/getmilpa/live/compare/v0.5.1...v0.6.0) (2026-08-27)
 
 

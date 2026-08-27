@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.3.0';
+    private const VERSION = '0.4.0';
 
     private const INITIAL = 'queued';
 
@@ -67,7 +67,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
             contractVersion: self::VERSION,
             summary: 'A closed declarative state machine: states, transitions and effects are data; the reducer is the table.',
             stateSchema: ['state' => ['type' => 'string']],
-            actions: ['start' => [], 'finish' => [], 'fail' => [], 'fire' => ['payload' => ['event' => 'string']]],
+            actions: ['start' => [], 'finish' => [], 'fail' => [], 'fire' => ['payload' => ['event' => 'string'], 'scopeBy' => 'event']],
         );
     }
 

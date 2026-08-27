@@ -103,5 +103,6 @@ final class StateMachineComponentTest extends TestCase
         self::assertSame('unlocked', $r->state->data['state']);
         self::assertContains(['type' => 'emit', 'event' => 'door.unlocked'], $r->effects);
         self::assertArrayHasKey('fire', StateMachineComponent::contract()->actions, 'fire is a declared action the authorizer allows');
+        self::assertSame('event', StateMachineComponent::contract()->actions['fire']['scopeBy'], 'fire is scoped per-event by the authorizer (decisions/0096)');
     }
 }

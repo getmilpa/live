@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/getmilpa/live/compare/v0.11.0...v0.12.0) (2026-08-27)
+
+
+### Features
+
+* **components:** guard leaves can read v1 Refs (dot-path) and compare field-to-field via valueRef ([#24](https://github.com/getmilpa/live/issues/24)) ([aef2517](https://github.com/getmilpa/live/commit/aef25172b99ecedeb017c7de635c466ecbf643e8))
+
 ## [0.11.0](https://github.com/getmilpa/live/compare/v0.10.0...v0.11.0) (2026-08-27)
 
 

@@ -15,7 +15,10 @@ declare(strict_types=1);
 namespace Milpa\Live\Components;
 
 use Milpa\Live\Components\Dashboard\AbstractDashboardComponent;
+use Milpa\Interfaces\Event\MilpaEventDispatcherInterface;
 use Milpa\Live\Events\LiveEventEmitter;
+use Milpa\Live\Support\Clock;
+use Milpa\Live\Support\SystemClock;
 use Milpa\Live\ValueObjects\ComponentContract;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
@@ -35,7 +38,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.9.0';
+    private const VERSION = '0.10.0';
 
     private const INITIAL = 'queued';
 
@@ -57,7 +60,16 @@ final class StateMachineComponent extends AbstractDashboardComponent
     ];
 
     /** The closed allow-list of effect types a transition may declare — extending it is a version bump, never code. */
-    private const EFFECT_TYPES = ['emit', 'set-variable'];
+    private const EFFECT_TYPES = ['emit', 'set-variable', 'stamp'];
+
+    /**
+     * @param Clock $clock time as an INPUT: a `stamp` effect reads it from here, never from `date()`, so the
+     *                     same inputs and the same clock replay to the same state (greenhouse decisions/0102).
+     */
+    public function __construct(?MilpaEventDispatcherInterface $dispatcher = null, private readonly Clock $clock = new SystemClock())
+    {
+        parent::__construct($dispatcher);
+    }
 
     /** The machine's contract: a single `state` field and the declared events; the authorizer allow-lists these. */
     public static function contract(): ComponentContract
@@ -235,6 +247,8 @@ final class StateMachineComponent extends AbstractDashboardComponent
             }
             if ($type === 'set-variable') {
                 $data[(string) ($effect['key'] ?? '')] = $effect['value'] ?? null;
+            } elseif ($type === 'stamp') { // time as an input: read from the injected Clock, never date()
+                $data[(string) ($effect['key'] ?? '')] = $this->clock->now();
             } else { // 'emit' — a named event the host may observe, echoed to the client, never code
                 $emitted[] = ['type' => 'emit', 'event' => (string) ($effect['event'] ?? '')];
             }

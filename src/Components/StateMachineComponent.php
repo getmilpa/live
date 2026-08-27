@@ -17,8 +17,8 @@ namespace Milpa\Live\Components;
 use Milpa\Live\Components\Dashboard\AbstractDashboardComponent;
 use Milpa\Interfaces\Event\MilpaEventDispatcherInterface;
 use Milpa\Live\Events\LiveEventEmitter;
-use Milpa\Live\Support\Clock;
-use Milpa\Live\Support\SystemClock;
+use Milpa\Interfaces\Clock;
+use Milpa\Support\SystemClock;
 use Milpa\Live\ValueObjects\ComponentContract;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
@@ -38,7 +38,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.10.0';
+    private const VERSION = '0.11.0';
 
     private const INITIAL = 'queued';
 

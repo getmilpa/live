@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Milpa\Live\Tests\Components;
 
 use Milpa\Live\Components\StateMachineComponent;
-use Milpa\Live\Support\Clock;
-use Milpa\Live\Support\FixedClock;
+use Milpa\Interfaces\Clock;
+use Milpa\Support\FixedClock;
 use Milpa\Live\ValueObjects\ComponentContext;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/getmilpa/live/compare/v0.12.0...v0.13.0) (2026-08-27)
+
+
+### Features
+
+* **components:** a state can declare onEnter effects (v1 state-enter entry actions) ([#26](https://github.com/getmilpa/live/issues/26)) ([3eda9fc](https://github.com/getmilpa/live/commit/3eda9fc9a272598c6db80c49fa4c68c80009c94d))
+
 ## [0.12.0](https://github.com/getmilpa/live/compare/v0.11.0...v0.12.0) (2026-08-27)
 
 

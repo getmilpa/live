@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.6.0';
+    private const VERSION = '0.7.0';
 
     private const INITIAL = 'queued';
 
@@ -214,6 +214,31 @@ final class StateMachineComponent extends AbstractDashboardComponent
     }
 
     /**
+     * Resolve a portable-interaction/v1 Ref (`{kind?: 'data', path}`) into the state's data by dot-path — a
+     * declared walk over data, never code. Only `kind: data` (or absent) is resolved; other kinds yield null.
+     *
+     * @param array<string, mixed> $ref
+     * @param array<string, mixed> $data
+     */
+    private function resolveRef(array $ref, array $data): mixed
+    {
+        $kind = $ref['kind'] ?? 'data';
+        if ($kind !== 'data') {
+            return null;
+        }
+        $path = \is_string($ref['path'] ?? null) ? $ref['path'] : '';
+        $cursor = $data;
+        foreach (explode('.', $path) as $segment) {
+            if (! \is_array($cursor) || ! \array_key_exists($segment, $cursor)) {
+                return null;
+            }
+            $cursor = $cursor[$segment];
+        }
+
+        return $cursor;
+    }
+
+    /**
      * Evaluate a declared guard (portable-interaction/v1 Condition) against the state. A leaf is `{var, op,
      * value}` over a state-data field with a CLOSED op set; a compound guard is `{all|any: [sub...]}` or
      * `{not: sub}` — a closed declarative tree. An unknown op fails closed (the transition is refused). No code.
@@ -251,10 +276,16 @@ final class StateMachineComponent extends AbstractDashboardComponent
             return ! $this->guardSatisfied($when['not'], $data);
         }
 
-        $var = \is_string($when['var'] ?? null) ? $when['var'] : '';
         $op = \is_string($when['op'] ?? null) ? $when['op'] : 'truthy';
-        $actual = $data[$var] ?? null;
-        $value = $when['value'] ?? null;
+        // The left operand is a Ref (portable-interaction/v1 Ref{kind,path}) with dot-path resolution into the
+        // state's data, or the flat `var` key (back-compat). The right operand is a literal `value` or another
+        // Ref via `valueRef` (field-to-field comparison). Path resolution is declared data, never code.
+        $actual = \is_array($when['ref'] ?? null)
+            ? $this->resolveRef($when['ref'], $data)
+            : ($data[\is_string($when['var'] ?? null) ? $when['var'] : ''] ?? null);
+        $value = \is_array($when['valueRef'] ?? null)
+            ? $this->resolveRef($when['valueRef'], $data)
+            : ($when['value'] ?? null);
         $numeric = \is_numeric($actual) && \is_numeric($value);
 
         return match ($op) {

@@ -180,4 +180,43 @@ final class StateMachineComponentTest extends TestCase
         self::assertSame('done', $this->handle($s, 'gonot')->state->data['state'], 'not(a) holds while a is falsy');
         self::assertSame('s', $this->handle($withA, 'gonot')->state->data['state'], 'not(a) fails once a is truthy');
     }
+    public function testAGuardCanCompareTwoStateFieldsViaValueRef(): void
+    {
+        $m = ['initial' => 'draft', 'transitions' => [
+            'draft' => [
+                'setc' => ['to' => 'draft', 'effects' => [['type' => 'set-variable', 'key' => 'count', 'value' => 3]]],
+                'sett' => ['to' => 'draft', 'effects' => [['type' => 'set-variable', 'key' => 'threshold', 'value' => 2]]],
+                'submit' => ['to' => 'sent', 'when' => ['ref' => ['path' => 'count'], 'op' => 'gte', 'valueRef' => ['path' => 'threshold']]],
+            ],
+            'sent' => [],
+        ]];
+        $s = $this->mount(['machine' => $m]);
+        // count/threshold unset → not comparable → refused
+        self::assertSame('draft', $this->handle($s, 'submit')->state->data['state']);
+        $ready = $this->handle($this->handle($s, 'setc')->state, 'sett')->state; // count=3, threshold=2
+        self::assertSame('sent', $this->handle($ready, 'submit')->state->data['state'], 'count>=threshold → fires (field-to-field)');
+    }
+
+    public function testAGuardRefResolvesADotPathIntoNestedState(): void
+    {
+        $state = new StateSnapshot('sm-1', 'state-machine', '1', ['state' => 'a', 'config' => ['limit' => 5]], [
+            'principal' => 'actor:rod',
+            'machine' => ['transitions' => ['a' => ['go' => ['to' => 'b', 'when' => ['ref' => ['path' => 'config.limit'], 'op' => 'gte', 'value' => 5]]]]],
+        ]);
+        self::assertSame('b', $this->handle($state, 'go')->state->data['state'], 'config.limit (5) >= 5 → fires');
+
+        $low = new StateSnapshot('sm-1', 'state-machine', '1', ['state' => 'a', 'config' => ['limit' => 3]], $state->meta);
+        self::assertSame('a', $this->handle($low, 'go')->state->data['state'], 'config.limit (3) < 5 → refused');
+    }
+
+    public function testTheFlatVarLeafStillWorks(): void
+    {
+        $m = ['initial' => 'p', 'transitions' => [
+            'p' => ['ok' => ['to' => 'p', 'effects' => [['type' => 'set-variable', 'key' => 'flag', 'value' => true]]], 'go' => ['to' => 'q', 'when' => ['var' => 'flag', 'op' => 'truthy']]],
+            'q' => [],
+        ]];
+        $s = $this->mount(['machine' => $m]);
+        self::assertSame('p', $this->handle($s, 'go')->state->data['state'], 'flat var back-compat: refused while unset');
+        self::assertSame('q', $this->handle($this->handle($s, 'ok')->state, 'go')->state->data['state']);
+    }
 }

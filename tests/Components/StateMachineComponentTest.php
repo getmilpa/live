@@ -244,4 +244,28 @@ final class StateMachineComponentTest extends TestCase
         self::assertSame('a', $r->state->data['state'], 'a non-allow-listed onEnter effect refuses the transition');
         self::assertArrayHasKey('effect', $r->errors);
     }
+    public function testTheLifecycleFiresInOrderOnExitTransitionOnEnter(): void
+    {
+        $m = ['initial' => 'idle', 'transitions' => [
+            'idle' => ['start' => ['to' => 'running', 'effects' => [['type' => 'emit', 'event' => 'transition']]]],
+            'running' => [],
+        ], 'states' => [
+            'idle' => ['onExit' => [['type' => 'emit', 'event' => 'idle.exit']]],
+            'running' => ['onEnter' => [['type' => 'emit', 'event' => 'running.enter']]],
+        ]];
+        $r = $this->handle($this->mount(['machine' => $m]), 'start');
+        self::assertSame('running', $r->state->data['state']);
+        $events = array_map(static fn (array $e): string => $e['event'], $r->effects);
+        self::assertSame(['idle.exit', 'transition', 'running.enter'], $events, 'onExit → transition → onEnter, in order');
+    }
+
+    public function testAnOnExitEffectOutsideTheAllowListIsRefused(): void
+    {
+        $m = ['initial' => 'a', 'transitions' => ['a' => ['go' => ['to' => 'b']]], 'states' => [
+            'a' => ['onExit' => [['type' => 'run-shell', 'cmd' => 'x']]],
+        ]];
+        $r = $this->handle($this->mount(['machine' => $m]), 'go');
+        self::assertSame('a', $r->state->data['state'], 'a non-allow-listed onExit refuses the transition');
+        self::assertArrayHasKey('effect', $r->errors);
+    }
 }

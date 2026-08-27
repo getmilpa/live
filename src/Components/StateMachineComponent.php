@@ -35,7 +35,7 @@ final class StateMachineComponent extends AbstractDashboardComponent
 {
     private const NAME = 'state-machine';
 
-    private const VERSION = '0.8.0';
+    private const VERSION = '0.9.0';
 
     private const INITIAL = 'queued';
 
@@ -188,11 +188,12 @@ final class StateMachineComponent extends AbstractDashboardComponent
                 $data['state'] = $transition['to'];
                 $emitted = [];
 
-                // The transition's own effects, then the entry (`onEnter`) effects the DESTINATION state declares
-                // (portable-interaction/v1 state-enter): a state can fire declared effects the moment it is
-                // entered — data, allow-listed, no code.
+                // The state lifecycle, in order: the SOURCE state's exit effects (`onExit`), then the
+                // transition's own effects, then the DESTINATION state's entry effects (`onEnter`) —
+                // portable-interaction/v1 state-exit/state-enter. Each is data, allow-listed, no code.
+                $onExit = $machine['states'][$current]['onExit'] ?? [];
                 $onEnter = $machine['states'][$transition['to']]['onEnter'] ?? [];
-                foreach ([$transition['effects'] ?? [], $onEnter] as $effects) {
+                foreach ([$onExit, $transition['effects'] ?? [], $onEnter] as $effects) {
                     $bad = $this->applyEffects(\is_array($effects) ? $effects : [], $data, $emitted);
                     if ($bad !== null) {
                         // Closed allow-list: an effect no allow-list declares is refused, and the state does NOT move.

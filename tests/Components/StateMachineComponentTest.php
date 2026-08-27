@@ -306,4 +306,40 @@ final class StateMachineComponentTest extends TestCase
         $two = $component->handle(new InteractionRequest(componentId: 'sm-1', componentName: 'state-machine', action: 'go', state: $mount))->state->data['at'];
         self::assertNotSame($one, $two, 'the stamp reflects the clock (t1 then t2), so it is not a constant');
     }
+    public function testTheCanonicalArrayFormRunsWithGuardForks(): void
+    {
+        // array+Action form (portable-interaction/v1.3): two `go` from `s` differ by guard — a fork the
+        // nested-map could not express (greenhouse decisions/0106).
+        $m = ['initial' => 's', 'states' => ['s', 'a', 'b'], 'transitions' => [
+            ['from' => 's', 'on' => 'go', 'to' => 'a', 'when' => ['ref' => ['kind' => 'data', 'path' => 'x'], 'op' => 'truthy'],
+             'effects' => [['type' => 'emit', 'params' => ['event' => 'went.a']]]],
+            ['from' => 's', 'on' => 'go', 'to' => 'b', 'when' => ['ref' => ['kind' => 'data', 'path' => 'x'], 'op' => 'falsy']],
+        ]];
+        // x falsy → fork to b
+        $s0 = $this->mount(['machine' => $m]);
+        self::assertSame('b', $this->handle($s0, 'go')->state->data['state'], 'falsy guard forks to b');
+
+        // x truthy → fork to a, with its Action-shaped emit
+        $sx = new StateSnapshot($s0->componentId, $s0->componentName, $s0->version, ['state' => 's', 'x' => true], $s0->meta);
+        $r = $this->handle($sx, 'go');
+        self::assertSame('a', $r->state->data['state'], 'truthy guard forks to a');
+        self::assertContains(['type' => 'emit', 'event' => 'went.a'], $r->effects, 'canonical Action-shaped emit fired');
+    }
+
+    public function testTheCanonicalArrayFormLifecycleAndStamp(): void
+    {
+        $m = ['initial' => 'idle', 'transitions' => [
+            ['from' => 'idle', 'on' => 'start', 'to' => 'running', 'effects' => [['type' => 'stamp', 'target' => ['kind' => 'data', 'path' => 'at']]]],
+        ], 'states' => ['running' => ['onEnter' => [['type' => 'set-variable', 'target' => ['kind' => 'data', 'path' => 'entered'], 'params' => ['value' => true]]]]]];
+        $c = new StateMachineComponent(null, new FixedClock('2026-08-27T00:00:00+00:00'));
+        $r = $c->handle(new InteractionRequest(
+            componentId: 'sm-1',
+            componentName: 'state-machine',
+            action: 'start',
+            state: $c->mount(['machine' => $m], new ComponentContext('sm-1', principal: 'actor:rod'))
+        ));
+        self::assertSame('running', $r->state->data['state']);
+        self::assertSame('2026-08-27T00:00:00+00:00', $r->state->data['at'], 'stamp Action wrote the injected clock into target.path');
+        self::assertTrue($r->state->data['entered'], 'onEnter Action fired on entry');
+    }
 }

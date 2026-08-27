@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/getmilpa/live/compare/v0.16.0...v0.17.0) (2026-08-27)
+
+
+### Features
+
+* **components:** the StateMachine accepts the canonical array+Action form and forks on guards ([#34](https://github.com/getmilpa/live/issues/34)) ([c7e9988](https://github.com/getmilpa/live/commit/c7e998895863e16829854cb2f39e5d3658b9ad39))
+
 ## [0.16.0](https://github.com/getmilpa/live/compare/v0.15.0...v0.16.0) (2026-08-27)
 
 

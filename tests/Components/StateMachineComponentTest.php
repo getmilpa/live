@@ -298,6 +298,11 @@ final class StateMachineComponentTest extends TestCase
             {
                 return 't' . (++$this->n);
             }
+
+            public function instant(): \DateTimeImmutable
+            {
+                return new \DateTimeImmutable('@' . $this->n);
+            }
         };
         $m = ['initial' => 'a', 'transitions' => ['a' => ['go' => ['to' => 'b', 'effects' => [['type' => 'stamp', 'key' => 'at']]]]]];
         $component = new StateMachineComponent(null, $counting);

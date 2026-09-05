@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Milpa\Live\Tests\Runtime;
 
 use Milpa\Live\Components\Autocomplete\AutocompleteComponent;
+use Milpa\Live\Components\Form\TextareaComponent;
 use Milpa\Live\DataSource\InMemoryDataSourceRegistry;
 use Milpa\Live\Runtime\InMemoryComponentRegistry;
 use PHPUnit\Framework\TestCase;
@@ -44,5 +45,25 @@ final class InMemoryComponentRegistryTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $registry->get('missing');
+    }
+
+    public function testNamesListsRegistrationOrderAndAReplacedNameKeepsItsSlot(): void
+    {
+        $registry = new InMemoryComponentRegistry();
+        self::assertSame([], $registry->names());
+
+        $registry->register('autocomplete', new AutocompleteComponent(new InMemoryDataSourceRegistry()));
+        $registry->register('textarea', new TextareaComponent());
+        $registry->register('autocomplete', new AutocompleteComponent(new InMemoryDataSourceRegistry()));
+
+        self::assertSame(['autocomplete', 'textarea'], $registry->names());
+    }
+
+    public function testNamesAreStringsEvenWhenANameIsNumeric(): void
+    {
+        $registry = new InMemoryComponentRegistry();
+        $registry->register('2024', new TextareaComponent());
+
+        self::assertSame(['2024'], $registry->names(), 'array_keys would hand the name back as an int');
     }
 }

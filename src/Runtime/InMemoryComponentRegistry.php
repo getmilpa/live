@@ -16,13 +16,14 @@ namespace Milpa\Live\Runtime;
 
 use Milpa\Live\Contracts\Component\ComponentDefinitionInterface;
 use Milpa\Live\Contracts\Component\ComponentRegistryInterface;
+use Milpa\Live\Contracts\Component\ListsComponents;
 
 /**
  * The default in-memory {@see ComponentRegistryInterface}: a plain
  * `name => ComponentDefinitionInterface` map, with no persistence or
  * discovery — callers {@see register()} every component explicitly.
  */
-final class InMemoryComponentRegistry implements ComponentRegistryInterface
+final class InMemoryComponentRegistry implements ComponentRegistryInterface, ListsComponents
 {
     /** @var array<string, ComponentDefinitionInterface> */
     private array $components = [];
@@ -51,5 +52,16 @@ final class InMemoryComponentRegistry implements ComponentRegistryInterface
     public function register(string $name, ComponentDefinitionInterface $component): void
     {
         $this->components[$name] = $component;
+    }
+
+    /**
+     * Every registered name, in registration order (a replaced name keeps its original slot).
+     *
+     * @return list<string>
+     */
+    public function names(): array
+    {
+        // array_keys hands a numeric-string name back as an int; the contract is list<string>.
+        return array_map(strval(...), array_keys($this->components));
     }
 }

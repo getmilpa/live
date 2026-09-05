@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/getmilpa/live/compare/v0.17.0...v0.18.0) (2026-09-05)
+
+
+### Features
+
+* **views:** the declared-view contract — client assets a renderer declares, a composite registry with named conflicts ([#37](https://github.com/getmilpa/live/issues/37)) ([7fdb343](https://github.com/getmilpa/live/commit/7fdb34325344659d59f70a67a53d4d206ab9aa4a))
+
 ## [0.17.0](https://github.com/getmilpa/live/compare/v0.16.0...v0.17.0) (2026-08-27)
 
 

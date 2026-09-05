@@ -137,10 +137,71 @@ renderer**. The web surface (`AutocompleteHtmlRenderer` and friends) lives in
 `milpa/live-web`; a TUI renderer is a live candidate in the Milpa lab. This package is
 the seam both build on, not either surface itself.
 
+## Declared views
+
+A plugin **declares** its view — its components, the client behaviour they need, their CSS —
+and the host's single runtime **reconciles** it: one Alpine, one `milpa-live`, one boot, one
+endpoint, one signing key per page (greenhouse `decisions/0211`). This package ships the
+render-agnostic half of that contract; `milpa/live-web` ships the HTML half (the compiler that
+collects assets, `LiveBoot` that emits them once, `MilpaLive.register()` on the client).
+
+- **`ClientAssets`** (`Milpa\Live\ValueObjects\ClientAssets`) — the value: `scripts` and
+  `styles` URL lists the plugin serves from its own routes. `merge()`/`with()` deduplicate by URL
+  and keep first-seen order; `empty()`, `isEmpty()`, `toArray()`.
+- **`DeclaresClientAssets`** (`Milpa\Live\Contracts\Rendering\DeclaresClientAssets`) — a
+  sibling of `ComponentRendererInterface` that an **HTML renderer** implements to declare the
+  files its output depends on. Never the `ComponentDefinitionInterface`: the component contract
+  stays render-target-agnostic, and the TUI renderer of the same component has nothing to declare.
+- **`RenderResult::clientAssets()`** — the typed channel a compiler fills by merging every
+  declaring renderer's assets (`ClientAssets::merge`, so a shared module is emitted once). Empty
+  when no renderer declared any. The legacy string-keyed `RenderResult::$assets` bag is untouched
+  and still merged with `array_merge` by compilers.
+- **`CompositeComponentRegistry`** (`Milpa\Live\Runtime\CompositeComponentRegistry`) — one
+  `ComponentRegistryInterface` over ordered, **labelled** layers (`['host' => …, 'billing' => …]`)
+  so one endpoint serves every plugin's components and a cross-component effect resolves across
+  them. First layer wins on `has()`/`get()`; `register()` writes to the one layer named writable
+  (or throws `LogicException` when none); `names()` is the union in layer order. Shadowing is
+  never silent: the same name bound to **different definitions** in two layers (a different class,
+  or two instances of a class that carries state) throws `ComponentNameConflictException` at
+  construction, naming the component and both layers. The same instance in two layers is fine, and
+  so are two instances of a stateless class (no instance property at all). The check is identity
+  or statelessness — never a structural compare, which recurses into whatever the component holds
+  and turns a collaborator pointing back at it into an uncatchable fatal instead of a named
+  exception. The shipped components hold a dispatcher, so two `new TextareaComponent()` under one
+  name in two layers are a conflict: a plugin reuses the host's instance or names its own component.
+- **`ListsComponents`** (`Milpa\Live\Contracts\Component\ListsComponents`) — `names(): list<string>`,
+  implemented by `InMemoryComponentRegistry` and the composite. A layer that does not list is still
+  resolved but takes no part in conflict detection or `names()`.
+- **`ComponentRendererRegistry::registerFor()` / `resolveFor()`** — the pair of the composite (a
+  `milpa/live-web` `LiveEndpoint` or `XhtmlComponentCompiler` accepts it in place of a name-keyed array):
+  a renderer registered *for* a component name answers for that name at its target, else `null` —
+  exactly what the array answered. The target-wide `register()`/`resolve()` is a separate question
+  and is deliberately **not** the fallback: every shipped HTML renderer is single-family and throws
+  for the rest, so a fallback would hand a plugin's component to a renderer that refuses it and turn
+  a missing registration into an uncaught exception in the endpoint. A host with a general renderer
+  registers it for each name it serves.
+
+```php
+use Milpa\Live\Runtime\CompositeComponentRegistry;
+use Milpa\Live\Rendering\ComponentRendererRegistry;
+
+$components = new CompositeComponentRegistry(['host' => $hostRegistry, 'billing' => $billingRegistry], writable: 'host');
+$renderers = new ComponentRendererRegistry();
+$renderers->registerFor('invoice-list', $billingHtmlRenderer); // implements DeclaresClientAssets → its .js/.css travel with every compile
+```
+
+### Upgrading
+
+Everything in this section is **additive**: no existing contract changes shape. `RenderResult`
+gained an optional trailing constructor parameter (`clientAssets`) with a default, so every
+existing renderer compiles; `InMemoryComponentRegistry` gained `names()`;
+`ComponentRendererRegistry` gained `registerFor()`/`resolveFor()`. Nothing is required of a
+renderer that has no client files to declare.
+
 ## Requirements
 
 - PHP **≥ 8.3**
-- `milpa/core` **^0.6**
+- `milpa/core` **≥ 0.9, < 1.0**
 - `psr/log` **^3**
 
 ## Documentation

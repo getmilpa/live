@@ -20,16 +20,25 @@ namespace Milpa\Live\ValueObjects;
  * itself (see {@see RenderRequest::$state}), so callers that need to
  * persist or re-encode the resulting state do not have to re-mount to get
  * it.
+ *
+ * Two asset channels coexist on purpose: `$assets` is the legacy,
+ * string-keyed, target-specific bag (`'script'` URL, TUI key hints) that
+ * compilers merge with `array_merge`; {@see clientAssets()} is the typed
+ * convention of greenhouse decisions/0211 — the URLs a renderer implementing
+ * {@see \Milpa\Live\Contracts\Rendering\DeclaresClientAssets} declared, which
+ * compilers merge with {@see ClientAssets::merge()} (deduplicated by URL) and
+ * the host emits once.
  */
 final readonly class RenderResult
 {
     /**
-     * @param string                           $output  The rendered output — HTML markup, or a TUI text block, per `$format`.
-     * @param StateSnapshot|null               $state   The state that was rendered, populated whenever the renderer mounted
-     *                                                  or otherwise resolved one.
-     * @param array<string, mixed>             $assets  Target-specific client assets/metadata (e.g. `'script'` URL, TUI key hints).
-     * @param array<int, array<string, mixed>> $effects Side effects the caller should apply alongside the output.
-     * @param RenderTarget                     $format  Which target this output was rendered for.
+     * @param string                           $output       The rendered output — HTML markup, or a TUI text block, per `$format`.
+     * @param StateSnapshot|null               $state        The state that was rendered, populated whenever the renderer mounted
+     *                                                       or otherwise resolved one.
+     * @param array<string, mixed>             $assets       Target-specific client assets/metadata (e.g. `'script'` URL, TUI key hints).
+     * @param array<int, array<string, mixed>> $effects      Side effects the caller should apply alongside the output.
+     * @param RenderTarget                     $format       Which target this output was rendered for.
+     * @param ClientAssets|null                $clientAssets The declared client files this output depends on, or null for none.
      */
     public function __construct(
         public string $output,
@@ -37,6 +46,17 @@ final readonly class RenderResult
         public array $assets = [],
         public array $effects = [],
         public RenderTarget $format = RenderTarget::HTML,
+        private ?ClientAssets $clientAssets = null,
     ) {
+    }
+
+    /**
+     * The declared client files this output depends on — scripts and
+     * stylesheets the host page must load once. Empty when the renderer
+     * declared none.
+     */
+    public function clientAssets(): ClientAssets
+    {
+        return $this->clientAssets ?? ClientAssets::empty();
     }
 }

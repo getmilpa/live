@@ -33,6 +33,11 @@ use Milpa\Live\Contracts\Component\DeclaresComponents;
 final class Library implements DeclaresComponents
 {
     /**
+     * The primitives this package brings — the concrete component classes under `src/Components`.
+     *
+     * Abstract bases are absent on purpose: a catalogue cannot mount one, and a declaration is a
+     * promise that the class can be built.
+     *
      * @return list<class-string<\Milpa\Live\Contracts\Component\ComponentDefinitionInterface>>
      */
     public function declaredComponents(): array

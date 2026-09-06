@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/getmilpa/live/compare/v0.18.0...v0.19.0) (2026-09-06)
+
+
+### Features
+
+* a host can declare the components it brings ([#40](https://github.com/getmilpa/live/issues/40)) ([4d8c993](https://github.com/getmilpa/live/commit/4d8c993d6eeea0916c63f0420c2d13238a55dc67))
+
 ## [0.18.0](https://github.com/getmilpa/live/compare/v0.17.0...v0.18.0) (2026-09-05)
 
 

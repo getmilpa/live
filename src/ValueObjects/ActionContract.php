@@ -46,17 +46,17 @@ use Milpa\Command\Effect\Mutation;
 final readonly class ActionContract
 {
     /**
-     * @param string             $summary     What the action is for, in one sentence — the text an agent's
-     *                                        catalogue shows. There is no second copy to keep in sync.
-     * @param bool               $mutating    Whether performing it changes anything.
-     * @param EffectProfile|null $effects     The five-axis profile, or `null` for NOT DECLARED. Never a
-     *                                        default profile: see the note above.
-     * @param string|null        $namedTarget The payload field a human must name for this action to be
-     *                                        meaningful (ADR-0044), when it has one.
-     * @param string|null        $scopeBy     A payload field whose VALUE, not the action name, derives the
-     *                                        authorization scope — one generic action carrying per-event
-     *                                        authorization (greenhouse decisions/0096).
-     * @param array<string, mixed> $payload   The payload shape, exactly as the bare-array form declared it.
+     * @param string               $summary     What the action is for, in one sentence — the text an agent's
+     *                                          catalogue shows. There is no second copy to keep in sync.
+     * @param bool                 $mutating    Whether performing it changes anything.
+     * @param EffectProfile|null   $effects     The five-axis profile, or `null` for NOT DECLARED. Never a
+     *                                          default profile: see the note above.
+     * @param string|null          $namedTarget The payload field a human must name for this action to be
+     *                                          meaningful (ADR-0044), when it has one.
+     * @param string|null          $scopeBy     A payload field whose VALUE, not the action name, derives the
+     *                                          authorization scope — one generic action carrying per-event
+     *                                          authorization (greenhouse decisions/0096).
+     * @param array<string, mixed> $payload     The payload shape, exactly as the bare-array form declared it.
      */
     public function __construct(
         public string $summary = '',

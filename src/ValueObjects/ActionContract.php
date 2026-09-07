@@ -37,6 +37,16 @@ use Milpa\Command\Effect\Mutation;
  * overnight, and an additive change would have become a breaking one. Anything that gates on this must ask
  * «was it declared?» BEFORE it asks «what does the profile say?».
  *
+ * ── AN ACTION THAT DELEGATES NAMES ITS OPERATION, IT DOES NOT COPY IT ──────────────────────────────
+ *
+ * Most component actions are their own act. Some are a BUTTON FOR AN OPERATION — a panel offering to install a
+ * capability is offering `capabilities:enable`, which already declares that it downloads third-party code, that
+ * its authority is privileged and that its reversibility is manual recovery.
+ *
+ * Restating that profile here would be two sources of truth about one act, and they would drift the first time
+ * the operation's own classification changed. {@see $invokes} names the operation instead: the action says WHAT
+ * IT RUNS, and the profile stays where it was declared and where the gate already reads it.
+ *
  * ── WHAT IT REFUSES ────────────────────────────────────────────────────────────────────────────────
  *
  * A declaration that contradicts itself is refused where it is written, not obeyed and puzzled over later:
@@ -64,8 +74,18 @@ final readonly class ActionContract
         public ?EffectProfile $effects = null,
         public ?string $namedTarget = null,
         public ?string $scopeBy = null,
+        public ?string $invokes = null,
         public array $payload = [],
     ) {
+        if ($invokes !== null && $effects !== null) {
+            throw new \InvalidArgumentException(sprintf(
+                'An action that delegates to the operation "%s" cannot also carry its own effect profile. The '
+                . 'operation declares its effects and its gate reads them there; a second copy here would drift '
+                . 'the first time that declaration changed. Name the operation, or own the effects.',
+                $invokes,
+            ));
+        }
+
         if ($effects === null) {
             return;
         }

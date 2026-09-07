@@ -20,6 +20,7 @@
     ],
     "require": {
         "php": ">=8.3",
+        "milpa/command": ">=0.23 <1.0",
         "milpa/core": ">=0.9 <1.0",
         "psr/log": "^3"
     },

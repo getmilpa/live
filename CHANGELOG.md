@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/getmilpa/live/compare/v0.19.0...v0.20.0) (2026-09-07)
+
+
+### Features
+
+* a component action declares what it is FOR, not only its payload ([#42](https://github.com/getmilpa/live/issues/42)) ([59219b4](https://github.com/getmilpa/live/commit/59219b4825739d922db1f648262cf7b8ac8c0fe8))
+
 ## [0.19.0](https://github.com/getmilpa/live/compare/v0.18.0...v0.19.0) (2026-09-06)
 
 

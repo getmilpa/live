@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/getmilpa/live/compare/v0.20.0...v0.21.0) (2026-09-07)
+
+
+### Features
+
+* an action can name the operation it delegates to ([#44](https://github.com/getmilpa/live/issues/44)) ([9fc4d06](https://github.com/getmilpa/live/commit/9fc4d06785880b2ba4c0a1f2f0a09304bc936235))
+
 ## [0.20.0](https://github.com/getmilpa/live/compare/v0.19.0...v0.20.0) (2026-09-07)
 
 

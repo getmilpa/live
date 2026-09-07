@@ -109,4 +109,35 @@ final class ActionContractTest extends TestCase
             authority: Authority::WriteAsUser,
         );
     }
+
+    public function testAnActionCanNameTheOperationItDelegatesTo(): void
+    {
+        $action = new ActionContract(
+            summary: 'Install an opt-in capability.',
+            mutating: true,
+            namedTarget: 'capability',
+            invokes: 'capabilities:enable',
+        );
+
+        self::assertSame('capabilities:enable', $action->invokes);
+        self::assertTrue($action->mutating);
+        self::assertFalse($action->declaresEffects(), 'the profile stays with the operation, not here');
+    }
+
+    public function testDelegatingAndDeclaringEffectsAtOnceIsRefused(): void
+    {
+        // Two sources of truth about one act. They would drift the first time the operation's own
+        // classification changed, and the gate reads the operation's — so this copy could only ever
+        // be the wrong one.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/cannot also carry its own effect profile/');
+
+        new ActionContract(mutating: false, effects: EffectProfile::readOnly(), invokes: 'capabilities:enable');
+    }
+
+    public function testAnActionThatOwnsItsEffectsStillMay(): void
+    {
+        // The refusal is about delegating AND declaring, not about declaring.
+        self::assertTrue((new ActionContract(mutating: false, effects: EffectProfile::readOnly()))->declaresEffects());
+    }
 }

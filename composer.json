@@ -21,7 +21,7 @@
     "require": {
         "php": ">=8.3",
         "milpa/command": ">=0.23 <1.0",
-        "milpa/core": ">=0.11 <1.0",
+        "milpa/core": ">=0.12 <1.0",
         "psr/log": "^3"
     },
     "require-dev": {
@@ -39,6 +39,13 @@
         "psr-4": {
             "Milpa\\Live\\Tests\\": "tests/",
             "Milpa\\Docs\\": "vendor/milpa/core/tools/gen-docs/"
+        }
+    },
+    "extra": {
+        "milpa": {
+            "events": [
+                "Milpa\\Live\\Events\\LiveEvents"
+            ]
         }
     }
 }

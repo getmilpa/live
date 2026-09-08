@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Milpa\Live\Events;
 
 use Milpa\Events\InterceptionSlot;
+use Milpa\Interfaces\Event\DeclaredEvents;
 use Milpa\Interfaces\Event\MilpaEventDispatcherInterface;
 use Milpa\Live\Http\LiveHttpResponse;
 use Milpa\Live\ValueObjects\ComponentContext;
@@ -41,12 +42,51 @@ use Milpa\Live\ValueObjects\StateSnapshot;
  * `docs/superpowers/specs/2026-07-08-event-driven-familia-design.md`
  * §milpa/live: "el dispatcher entra como dep opcional; sin él los
  * componentes corren igual").
+ *
+ * This package has no boot site: the dispatcher enters per call, so the
+ * emitter declares its events lazily — the first time a given dispatcher
+ * that implements {@see DeclaredEvents} reaches any helper here, every name
+ * in {@see LiveEvents::declarations()} is declared to it, once per
+ * dispatcher instance (greenhouse decisions/0228). A dispatcher that does
+ * not implement the contract is asked nothing; `null` declares nothing.
  */
 final class LiveEventEmitter
 {
+    /**
+     * The dispatchers this emitter has already declared to, weakly held so
+     * a short-lived dispatcher (one per test, one per request) is released.
+     *
+     * @var \WeakMap<object, true>|null
+     */
+    private static ?\WeakMap $declaredTo = null;
+
     private function __construct()
     {
         // Static-only utility — never instantiated.
+    }
+
+    /**
+     * Declares every event of this package to `$dispatcher`, once per
+     * instance — a silent no-op unless it implements {@see DeclaredEvents}.
+     *
+     * Every `with*()` helper calls this before dispatching, so a host never
+     * has to; a host that wants the declarations visible BEFORE the first
+     * dispatch (a catalogue read at boot) may call it eagerly with the same
+     * dispatcher, and the lazy path then finds nothing left to do.
+     */
+    public static function declareTo(?MilpaEventDispatcherInterface $dispatcher): void
+    {
+        if (!$dispatcher instanceof DeclaredEvents) {
+            return;
+        }
+
+        self::$declaredTo ??= new \WeakMap();
+        if (isset(self::$declaredTo[$dispatcher])) {
+            return;
+        }
+
+        self::$declaredTo[$dispatcher] = true;
+        $dispatcher->declare(...LiveEvents::declarations());
     }
 
     /**
@@ -64,13 +104,15 @@ final class LiveEventEmitter
         ComponentContext $context,
         \Closure $compute,
     ): StateSnapshot {
-        $dispatcher?->dispatch('component.mounting', [
+        self::declareTo($dispatcher);
+
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_MOUNTING, [
             'event' => new ComponentMountingEvent($componentName, $props, $context),
         ]);
 
         $state = $compute();
 
-        $dispatcher?->dispatch('component.mounted', [
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_MOUNTED, [
             'event' => new ComponentMountedEvent($componentName, $props, $context, $state),
         ]);
 
@@ -100,8 +142,10 @@ final class LiveEventEmitter
         InteractionRequest $request,
         \Closure $compute,
     ): InteractionResult {
+        self::declareTo($dispatcher);
+
         $slot = new InterceptionSlot();
-        $dispatcher?->dispatch('component.handling', [
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_HANDLING, [
             'event' => new ComponentHandlingEvent($request),
             'slot' => $slot,
         ]);
@@ -127,7 +171,7 @@ final class LiveEventEmitter
             $result = $compute();
         }
 
-        $dispatcher?->dispatch('component.handled', [
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_HANDLED, [
             'event' => new ComponentHandledEvent($request, $result, $intercepted),
         ]);
 
@@ -153,8 +197,10 @@ final class LiveEventEmitter
         RenderRequest $request,
         \Closure $compute,
     ): RenderResult {
+        self::declareTo($dispatcher);
+
         $slot = new InterceptionSlot();
-        $dispatcher?->dispatch('component.rendering', [
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_RENDERING, [
             'event' => new ComponentRenderingEvent($componentName, $request),
             'slot' => $slot,
         ]);
@@ -177,7 +223,7 @@ final class LiveEventEmitter
             $result = $compute();
         }
 
-        $dispatcher?->dispatch('component.rendered', [
+        $dispatcher?->dispatch(LiveEvents::COMPONENT_RENDERED, [
             'event' => new ComponentRenderedEvent($componentName, $request, $result, $intercepted),
         ]);
 
@@ -199,8 +245,10 @@ final class LiveEventEmitter
         InteractionRequest $interaction,
         ?SecurityPrincipal $principal,
     ): InterceptionSlot {
+        self::declareTo($dispatcher);
+
         $slot = new InterceptionSlot();
-        $dispatcher?->dispatch('live.request', [
+        $dispatcher?->dispatch(LiveEvents::LIVE_REQUEST, [
             'event' => new LiveRequestEvent($interaction, $principal),
             'slot' => $slot,
         ]);
@@ -217,7 +265,9 @@ final class LiveEventEmitter
         LiveHttpResponse $response,
         bool $intercepted,
     ): void {
-        $dispatcher?->dispatch('live.responded', [
+        self::declareTo($dispatcher);
+
+        $dispatcher?->dispatch(LiveEvents::LIVE_RESPONDED, [
             'event' => new LiveRespondedEvent($interaction, $response, $intercepted),
         ]);
     }

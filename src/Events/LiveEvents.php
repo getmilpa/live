@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Milpa\Live\Events;
 
+use Milpa\Interfaces\Event\DeclaresEvents;
 use Milpa\Interfaces\Event\EventDeclaration;
 
 /**
@@ -28,7 +29,7 @@ use Milpa\Interfaces\Event\EventDeclaration;
  * because their `dispatch()` sites are in this package's emitter — the
  * endpoint that calls them holds no dispatch site of its own.
  */
-final class LiveEvents
+final class LiveEvents implements DeclaresEvents
 {
     /** PRE: a component is about to be mounted (no slot). */
     public const COMPONENT_MOUNTING = 'component.mounting';

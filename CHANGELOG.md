@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/getmilpa/live/compare/v0.22.0...v0.23.0) (2026-09-08)
+
+
+### Features
+
+* the manifest names the holder of this package's events ([#48](https://github.com/getmilpa/live/issues/48)) ([7b98e2a](https://github.com/getmilpa/live/commit/7b98e2afd3ed914b53c0c5fec5c1abdd917dbc82))
+
 ## [0.22.0](https://github.com/getmilpa/live/compare/v0.21.0...v0.22.0) (2026-09-08)
 
 

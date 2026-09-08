@@ -137,6 +137,15 @@ renderer**. The web surface (`AutocompleteHtmlRenderer` and friends) lives in
 `milpa/live-web`; a TUI renderer is a live candidate in the Milpa lab. This package is
 the seam both build on, not either surface itself.
 
+Every event the emitter dispatches is also **declared**: [`LiveEvents`](src/Events/LiveEvents.php)
+holds the name constants the emitter dispatches with and `LiveEvents::declarations()` returns one
+`EventDeclaration` per name (`milpa/core` ≥ 0.11). The emitter declares them lazily — the first
+time a dispatcher that implements `DeclaredEvents` reaches any helper, once per dispatcher
+instance; a host that wants them visible before the first dispatch calls
+`LiveEventEmitter::declareTo($dispatcher)`. A dispatcher without the contract is asked nothing.
+`live.request`/`live.responded` are declared here because their `dispatch()` sites are here:
+`milpa/live-web`'s endpoint calls this emitter and holds no dispatch site of its own.
+
 ## Declared views
 
 A plugin **declares** its view — its components, the client behaviour they need, their CSS —

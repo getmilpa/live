@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/getmilpa/live/compare/v0.21.0...v0.22.0) (2026-09-08)
+
+
+### Features
+
+* the emitter declares every event it dispatches, once per dispatcher ([#46](https://github.com/getmilpa/live/issues/46)) ([b616677](https://github.com/getmilpa/live/commit/b616677edde55d0b8be34c507360a361e8676e0e))
+
 ## [0.21.0](https://github.com/getmilpa/live/compare/v0.20.0...v0.21.0) (2026-09-07)
 
 

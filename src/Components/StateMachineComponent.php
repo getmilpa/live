@@ -20,6 +20,7 @@ use Milpa\Live\Events\LiveEventEmitter;
 use Milpa\Interfaces\Clock;
 use Milpa\Support\SystemClock;
 use Milpa\Live\ValueObjects\ComponentContract;
+use Milpa\Live\ValueObjects\ComponentPresentation;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
 use Milpa\Live\ValueObjects\StateSnapshot;
@@ -80,6 +81,9 @@ final class StateMachineComponent extends AbstractDashboardComponent
             summary: 'A closed declarative state machine: states, transitions and effects are data; the reducer is the table.',
             stateSchema: ['state' => ['type' => 'string']],
             actions: ['start' => [], 'finish' => [], 'fail' => [], 'fire' => ['payload' => ['event' => 'string'], 'scopeBy' => 'event']],
+            presentation: new ComponentPresentation(
+                messages: \dirname(__DIR__, 2) . '/resources/messages/state-machine.php',
+            ),
         );
     }
 

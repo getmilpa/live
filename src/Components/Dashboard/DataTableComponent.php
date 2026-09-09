@@ -17,6 +17,7 @@ namespace Milpa\Live\Components\Dashboard;
 use Milpa\Live\Events\LiveEventEmitter;
 use Milpa\Live\ValueObjects\ComponentContext;
 use Milpa\Live\ValueObjects\ComponentContract;
+use Milpa\Live\ValueObjects\ComponentPresentation;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
 use Milpa\Live\ValueObjects\StateSnapshot;
@@ -64,6 +65,9 @@ final class DataTableComponent extends AbstractDashboardComponent
                 'sort' => ['payload' => ['key' => 'string']],
                 'page' => ['payload' => ['page' => 'integer']],
             ],
+            presentation: new ComponentPresentation(
+                messages: \dirname(__DIR__, 3) . '/resources/messages/data-table.php',
+            ),
         );
     }
 

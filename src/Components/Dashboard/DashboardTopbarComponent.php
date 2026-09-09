@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Milpa\Live\Components\Dashboard;
 
 use Milpa\Live\ValueObjects\ComponentContract;
+use Milpa\Live\ValueObjects\ComponentPresentation;
 
 /**
  * Dashboard header/topbar primitive — title/subtitle/eyebrow/controls/
@@ -40,6 +41,9 @@ final class DashboardTopbarComponent extends AbstractDashboardComponent
                 'childrenHtml' => ['type' => 'string', 'required' => false],
             ],
             stateSchema: ['ready' => ['type' => 'boolean']],
+            presentation: new ComponentPresentation(
+                messages: \dirname(__DIR__, 3) . '/resources/messages/dashboard-topbar.php',
+            ),
         );
     }
 

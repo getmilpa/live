@@ -22,6 +22,11 @@ namespace Milpa\Live\ValueObjects;
  * to render it. The last one had no seam at all — a plugin could register a component but not dress
  * it, so its look had to be patched into somebody else's bundle. This is that seam.
  *
+ * Messages ride the same declaration rather than a catalogue of their own, and that is the point: a
+ * component whose text lived somewhere else would drift from its markup exactly the way the styles
+ * did. It is also why `messages` belongs HERE, beside a render-target-agnostic contract, while
+ * `styles` names an HTML file — "no results" is the same sentence in a terminal, a stylesheet is not.
+ *
  * Paths are ABSOLUTE and the component builds them from its own location (`__DIR__`), because the
  * component is the only thing that knows where its package lives. They are read by the render target
  * that understands them — the HTML orchestrator reads `styles`; a TUI target would ignore it — which
@@ -31,12 +36,14 @@ namespace Milpa\Live\ValueObjects;
 final readonly class ComponentPresentation
 {
     /**
-     * @param string|null $styles Absolute path to the component's stylesheet.
-     * @param string|null $script Absolute path to the component's client script.
+     * @param string|null $styles   Absolute path to the component's stylesheet.
+     * @param string|null $script   Absolute path to the component's client script.
+     * @param string|null $messages Absolute path to the component's message catalogue.
      */
     public function __construct(
         public ?string $styles = null,
         public ?string $script = null,
+        public ?string $messages = null,
     ) {
     }
 
@@ -48,6 +55,6 @@ final readonly class ComponentPresentation
      */
     public function declaresAnything(): bool
     {
-        return $this->styles !== null || $this->script !== null;
+        return $this->styles !== null || $this->script !== null || $this->messages !== null;
     }
 }

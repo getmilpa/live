@@ -20,6 +20,7 @@ use Milpa\Live\Contracts\Data\DataSourceRegistryInterface;
 use Milpa\Live\Events\LiveEventEmitter;
 use Milpa\Live\ValueObjects\ComponentContext;
 use Milpa\Live\ValueObjects\ComponentContract;
+use Milpa\Live\ValueObjects\ComponentPresentation;
 use Milpa\Live\ValueObjects\DataSourceRequest;
 use Milpa\Live\ValueObjects\InteractionRequest;
 use Milpa\Live\ValueObjects\InteractionResult;
@@ -78,6 +79,9 @@ final readonly class AutocompleteComponent implements ComponentDefinitionInterfa
             dataSources: [
                 'source' => ['kind' => 'list', 'shape' => ['value', 'label']],
             ],
+            presentation: new ComponentPresentation(
+                messages: \dirname(__DIR__, 3) . '/resources/messages/autocomplete.php',
+            ),
         );
     }
 

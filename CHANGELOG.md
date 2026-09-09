@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/getmilpa/live/compare/v0.23.0...v0.24.0) (2026-09-09)
+
+
+### Features
+
+* a component declares its own presentation ([#50](https://github.com/getmilpa/live/issues/50)) ([ba087d7](https://github.com/getmilpa/live/commit/ba087d71ff02a77fd0744afd83d0720953d23f42))
+
 ## [0.23.0](https://github.com/getmilpa/live/compare/v0.22.0...v0.23.0) (2026-09-08)
 
 

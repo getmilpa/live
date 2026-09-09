@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/getmilpa/live/compare/v0.24.0...v0.25.0) (2026-09-09)
+
+
+### Features
+
+* a component declares its messages, and the house's own words stop being Spanish ([#52](https://github.com/getmilpa/live/issues/52)) ([0bd4027](https://github.com/getmilpa/live/commit/0bd40273adaf9e1c1fcac456ea8bfba031884679))
+
 ## [0.24.0](https://github.com/getmilpa/live/compare/v0.23.0...v0.24.0) (2026-09-09)
 
 

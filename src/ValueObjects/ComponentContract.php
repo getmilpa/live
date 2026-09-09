@@ -38,7 +38,20 @@ final readonly class ComponentContract
         public array $stateSchema = [],
         public array $actions = [],
         public array $dataSources = [],
+        public ?ComponentPresentation $presentation = null,
     ) {
+    }
+
+    /**
+     * What this component needs on the page besides its markup, or an empty declaration.
+     *
+     * Never null, so a consumer asks one question and gets one answer instead of branching on
+     * whether the component bothered to declare — the same reason {@see action()} normalises
+     * its two shapes here rather than in every caller.
+     */
+    public function presentation(): ComponentPresentation
+    {
+        return $this->presentation ?? new ComponentPresentation();
     }
 
     /**

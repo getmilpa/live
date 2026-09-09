@@ -40,6 +40,12 @@ final readonly class ComponentPresentation
     ) {
     }
 
+    /**
+     * Whether this component asks the page for anything at all.
+     *
+     * Most components declare nothing, and the page must cost nothing for them — no empty tag, no
+     * filesystem call for a path that was never named.
+     */
     public function declaresAnything(): bool
     {
         return $this->styles !== null || $this->script !== null;

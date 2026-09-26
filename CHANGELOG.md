@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.1](https://github.com/getmilpa/live/compare/v0.25.0...v0.25.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **contracts:** declare what the renderers read ([#54](https://github.com/getmilpa/live/issues/54)) ([c1de6d9](https://github.com/getmilpa/live/commit/c1de6d9091fe19c30f97e8dc9016955221f7af1f))
+
 ## [0.25.0](https://github.com/getmilpa/live/compare/v0.24.0...v0.25.0) (2026-09-09)
 
 

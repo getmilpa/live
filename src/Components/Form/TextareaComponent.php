@@ -42,6 +42,8 @@ final class TextareaComponent extends AbstractFieldComponent
                 'hint' => ['type' => 'string', 'required' => false],
                 'error' => ['type' => 'string|null', 'required' => false],
                 'persistKey' => ['type' => 'string', 'required' => false],
+                // Read by the HTML renderer: validate on blur through the live endpoint (decisions/0481).
+                'remote' => ['type' => 'boolean', 'required' => false, 'description' => 'validate on the server when the field loses focus'],
                 'storage' => ['type' => 'string', 'default' => 'local'],
             ],
             stateSchema: [

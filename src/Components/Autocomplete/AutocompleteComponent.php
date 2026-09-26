@@ -61,6 +61,9 @@ final readonly class AutocompleteComponent implements ComponentDefinitionInterfa
                 'limit' => ['type' => 'integer', 'default' => 20],
                 'multiple' => ['type' => 'boolean', 'default' => false],
                 'persistKey' => ['type' => 'string', 'required' => false],
+                // Read by the HTML renderer as the items to offer without a server round trip
+                // (greenhouse decisions/0481: what the renderer reads, the contract says).
+                'staticItems' => ['type' => 'array', 'required' => false, 'description' => 'items offered without a server search: list of {value, label}'],
             ],
             stateSchema: [
                 'query' => ['type' => 'string'],

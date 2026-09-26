@@ -37,6 +37,8 @@ final class DashboardShellComponent extends AbstractDashboardComponent
                 'title' => ['type' => 'string', 'required' => false],
                 'density' => ['type' => 'string', 'default' => 'comfortable'],
                 'childrenHtml' => ['type' => 'string', 'required' => false],
+                // Read by the HTML renderer as the id of the main region (decisions/0481).
+                'mainId' => ['type' => 'string', 'required' => false, 'description' => 'the id of the main region; defaults to <id>-main'],
             ],
             stateSchema: ['ready' => ['type' => 'boolean']],
             presentation: new ComponentPresentation(
